@@ -30,6 +30,7 @@ class Music {
 
         // Bot 加入語音頻道
         this.connection[msg.guild.id] = await msg.member.voice.channel.join();
+		msg.channel.send('機器人加入頻道惹');
 
     }
 
@@ -65,12 +66,15 @@ class Music {
 
             // 如果目前正在播放歌曲就加入隊列，反之則播放歌曲
             if (this.isPlaying) {
-                msg.channel.send(`歌曲加入隊列：${info.title}`);
+                msg.channel.send(`歌曲加入隊列：${info.title}`).then(msg => {
+					msg.delete({ timeout: 3000 })
+				}).catch(/*Your Error handling if the Message isn't returned, sent, etc.*/);;
             } else {
                 this.isPlaying = true;
                 this.playMusic(msg, guildID, this.queue[guildID][0]);
+				this.queue[guildID].shift();
             }
-
+			msg.delete({ timeout: 1000 });
         } catch(e) {
             console.log(e);
         }
@@ -81,7 +85,6 @@ class Music {
 
         // 提示播放音樂
         msg.channel.send(`播放音樂：${musicInfo.name}`);
-
         // 播放音樂
         this.dispatcher[guildID] = this.connection[guildID].play(ytdl(musicInfo.url, { filter: 'audioonly' }));
 
@@ -89,7 +92,7 @@ class Music {
         this.dispatcher[guildID].setVolume(0.5);
 
         // 移除 queue 中目前播放的歌曲
-        this.queue[guildID].shift();
+        //this.queue[guildID].shift();
 
         // 歌曲播放結束時的事件
         const self = this;
@@ -101,6 +104,7 @@ class Music {
             } else {
                 self.isPlaying = false;
                 msg.channel.send('目前沒有音樂了，請加入音樂 :D');
+				
             }
 
         });
@@ -145,7 +149,7 @@ class Music {
         // 如果隊列中有歌曲就顯示
         if (this.queue[msg.guild.id] && this.queue[msg.guild.id].length > 0) {
             // 字串處理，將 Object 組成字串
-            const queueString = this.queue[msg.guild.id].map((item, index) => `[${index+1}] ${item.name}`).join();
+            const queueString = this.queue[msg.guild.id].map((item, index) => `[${index+1}] ${item.name}`).join('\n');
             msg.channel.send(queueString);
         } else {
             msg.channel.send('目前隊列中沒有歌曲');
